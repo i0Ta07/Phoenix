@@ -1,6 +1,6 @@
-import sqlite3,requests,os
-from langgraph.graph import StateGraph, START,END
-from langgraph.checkpoint.sqlite import SqliteSaver
+import requests,os,re
+from langgraph.graph import StateGraph, START
+from langgraph.checkpoint.postgres import PostgresSaver
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from typing import Annotated,TypedDict
@@ -9,7 +9,13 @@ from langchain_core.messages import BaseMessage
 from langchain_core.tools import tool
 from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.prebuilt import ToolNode,tools_condition
+from RAG import get_retriever,create_vector_store
+from langchain_core.runnables import RunnableConfig
+from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
+from langchain_core.documents import Document
 
+
+from database_utils import get_conn,init_schema
 load_dotenv()
 
 # define the state
@@ -17,7 +23,7 @@ class ChatState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
 
 # define model
-model = ChatOpenAI(model="gpt-4o")
+model = ChatOpenAI(model="gpt-5")
 rename_chat_model = ChatOpenAI()
 
 # **************************************************** Tools *********************************************************
@@ -29,12 +35,12 @@ search_tool = DuckDuckGoSearchRun()
 def calculator(first_number:float, second_number:float, operation:str) -> dict:
     """
     Perform arithmetic operation between two numbers and returns the result
-    Supported operations: add,mutiply,divide,subtract
+    Supported operations: add,multiply,divide,subtract
     """
     try:
         if operation == "add":
             result = first_number + second_number
-        elif operation == "muliply":
+        elif operation == "multiply":
             result = first_number * second_number
         elif operation == "subtract":
             result = first_number - second_number
@@ -56,7 +62,6 @@ def get_weather(latitude:float,longitude:float) -> float:
     data = response.json()
     return (data['current']['temperature_2m'])
 
-# Create Tool
 @tool
 def get_conversion_rate(base_currency:str,target_currency:str) -> float: # return -> dict:if returning JSON
     """Fetches latest conversion rate between a base currency and target currency"""
@@ -67,7 +72,113 @@ def get_conversion_rate(base_currency:str,target_currency:str) -> float: # retur
     return data["conversion_rate"]
 
 
-tools = [search_tool,get_conversion_rate,get_weather]
+# We cannot pass dynmic objects such as retriever in the parameter, we only send static objects such as str,float etc.
+@tool
+def get_contextPDF(query:str,config:RunnableConfig):
+    """
+    Retrieve relevant context from the user-uploaded PDF associated with
+    the current chat thread.
+
+    Invocation constraint: This tool may be invoked at most once per user query.
+    Multiple invocations within the same query are not permitted.
+    Thread constraint: In a given chat thread, the first PDF uploaded is treated
+    as immutable and defines the single authoritative document for that thread.
+    Any subsequent PDFs uploaded in the same thread are ignored, and all retrieval
+    is performed exclusively against the originally ingested PDF.
+
+    To query a different PDF, the user must start a new chat/thread.
+    
+    This tool MUST be used whenever the user's question depends on the
+    contents of an uploaded document, including but not limited to:
+    - Explicit or implicit references to the document
+      (e.g., "my document", "this file", "the uploaded PDF", "the content above")
+    - Requests to inspect, analyze, summarize, explain, or evaluate
+      information that exists only in the uploaded document
+    - Any question where answering without reading the document would
+      require assumptions or generalization
+
+    The uploaded document is the authoritative source of truth for all
+    document-dependent questions. The model should NOT answer such questions
+    using general knowledge or inference without first retrieving context
+    via this tool. If no relevant document context is found, explicitly state that the
+    answer cannot be determined from the uploaded document.
+    """
+
+    user_id = config["configurable"]["user_id"]
+    thread_id = config["configurable"]["thread_id"]
+    retriever = get_retriever(thread_id, user_id,doc_type="pdf")
+    if not retriever:
+        return  {"error":"Retriever not initialized. Please upload the PDF to continue"}
+    docs = retriever.invoke(query)
+    return {
+        "context": "\n\n".join(d.page_content for d in docs),
+        "metadata": [d.metadata for d in docs]
+    }
+    
+def parseYoutubeURL(url:str)->str:
+   data = re.findall(r"(?:v=|\/)([0-9A-Za-z_-]{11}).*", url)
+   if data:
+       return data[0]
+   return ""
+
+# Do not return runtime Error objects, return message payload  
+@tool
+def get_contextYTvideo(query:str,url:str,config:RunnableConfig):
+    """
+    Retrieve relevant context from a user-provided YouTube video transcript
+    associated with the current chat thread.
+
+    Invocation constraint: This tool may be invoked at most once per user query.
+    Multiple invocations within the same query are not permitted.
+
+    Thread constraint: In a given chat thread, the first YouTube URL provided
+    is treated as immutable and defines the single authoritative video for that
+    thread. Any subsequent URLs provided in the same thread are ignored, and all
+    retrieval is performed against the transcript of the originally ingested video.
+
+    To query a different YouTube video, the user must start a new chat/thread.
+
+    This tool MUST be used when the user asks a question that depends on the
+    contents of a YouTube video, including:
+    - Questions referring to the video explicitly or implicitly
+      (e.g., "this video", "the YouTube link", "what he says in the video")
+    - Requests to summarize, explain, analyze, or extract information
+      that exists only in the video content
+    - Any query that cannot be answered without reading the video transcript
+
+    The YouTube transcript is the authoritative source of truth for
+    video-dependent questions. The model should NOT answer such questions
+    from general knowledge or inference without first retrieving context
+    using this tool. If no relevant document context is found, explicitly state that the
+    answer cannot be determined from the uploaded document
+    """
+    user_id = config["configurable"]["user_id"]
+    thread_id = config["configurable"]["thread_id"]
+    retriever = get_retriever(thread_id, user_id,doc_type="YTvideo")
+    if not retriever:
+        video_id = parseYoutubeURL(url)
+        if not video_id:
+            return {"error": "Cannot fetch the video link"}
+        ytt_api = YouTubeTranscriptApi()
+        try:
+            transcript_list = ytt_api.fetch(video_id, languages=["en"])
+            transcript = ""
+            for snippet in transcript_list:
+                transcript +=  " " + snippet.text
+            docs = [Document(page_content=transcript,metadata={"source": url,"platform": "Youtube"})] # Expects a list of document objects
+            create_vector_store(docs=docs,thread_id=thread_id,user_id=user_id,doc_type="YTvideo") 
+            retriever = get_retriever(thread_id, user_id,doc_type="YTvideo")
+        except TranscriptsDisabled:
+            return ("No captions available for the video")
+        except Exception as e:
+            return {"error":f"Failed to create video vector store; Error: {str(e)}"}
+    docs = retriever.invoke(query)
+    return {
+        "context": "\n\n".join(d.page_content for d in docs),
+        "metadata": [d.metadata for d in docs]
+    }
+    
+tools = [search_tool,calculator,get_conversion_rate,get_weather,get_contextPDF,get_contextYTvideo]
 tool_llm = model.bind_tools(tools)
 
 
@@ -93,11 +204,15 @@ builder.add_edge(START,"chat_node")
 builder.add_conditional_edges("chat_node",tools_condition)
 builder.add_edge("tools","chat_node") # Connect tool_node to process node again
 
-# Create a sqlite3 connection object
-conn = sqlite3.connect(database="threads.db",check_same_thread=False)
+init_schema()
+
+# Create a postgres connection object
+conn = get_conn()
 
 # Create checkpointer
-checkpointer = SqliteSaver(conn)
+checkpointer = PostgresSaver(conn)
+
+checkpointer.setup()
 
 # Compile the graph
 graph = builder.compile(checkpointer=checkpointer)

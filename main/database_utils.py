@@ -1,41 +1,86 @@
-import sqlite3
+import psycopg,os,uuid
+from psycopg.rows import dict_row
 
 def get_conn():
-    return sqlite3.connect(
-        "threads.db",
-        check_same_thread=False
-    )
-
-def init_db():
-    conn = get_conn()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS threads (
-            thread_id TEXT PRIMARY KEY,
-            chat_name TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    try:
+        conn = psycopg.connect(
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"), 
+            password=os.getenv("DB_PASSWORD"),
+            host=os.getenv("DB_HOST", "localhost"),
+            port=int(os.getenv("DB_PORT", "5432")),
+            autocommit=True
         )
-    """)
-    conn.commit()
-    conn.close()
+        return conn
+    except Exception as e:
+        raise RuntimeError(f"Database connection failed: {e}")
 
-init_db()
+def init_schema():
+    try:
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                # Users Table
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS users (
+                        id UUID PRIMARY KEY,
+                        email TEXT NOT NULL UNIQUE CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'),
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    );
+                """)
 
-def create_thread(thread_id: str, chat_name: str):
-    conn = get_conn()
-    conn.execute(
-        "INSERT INTO threads (thread_id, chat_name) VALUES (?, ?)",
-        (str(thread_id), chat_name)
-    )
-    conn.commit()
-    conn.close()
+                # Initialize Local User
+                cur.execute("""
+                    INSERT INTO users (id,email)
+                    VALUES (
+                        '00000000-0000-0000-0000-000000000001',
+                        'bot@phoenix.app'
+                    )
+                    ON CONFLICT (id) DO NOTHING;
+                """)
+                # Thread table
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS threads (
+                            thread_id UUID PRIMARY KEY,
+                            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                            thread_name TEXT NOT NULL,
+                            file_name TEXT,
+                            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                        );
+                """)
+                # Threads User index
+                cur.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_threads_user_id ON threads(user_id);
+                """)
+    except Exception as e:
+        raise RuntimeError(f"Runtime Error on creating schema; Error: {e}") from e 
 
-def get_threads():
-    conn = get_conn()
-    rows = conn.execute("""
-        SELECT thread_id, chat_name
-        FROM threads
-        ORDER BY created_at ASC
-    """).fetchall()
-    conn.close()
-    return rows
+def create_thread(thread_id:uuid.UUID, thread_name: str, user_id : uuid.UUID ):
+    try:
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO threads (thread_id, user_id, thread_name) VALUES (%s,%s,%s)",
+                    (thread_id, user_id, thread_name)
+                )
+    except Exception as e:
+        raise RuntimeError(f"Runtime Error on creating thread; Error: {e}") from e 
 
+def update_file_name(file_name:str, thread_id:uuid.UUID,user_id:uuid.UUID):
+    try:
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE threads SET file_name = %s WHERE thread_id = %s AND user_id = %s",(file_name,thread_id,user_id))
+
+    except Exception as e:
+        raise RuntimeError(f"Runtime Error on updating filename; Error: {e}") from e
+
+def get_threads(user_id:uuid.UUID): # either user_id =  (UUID obj or None) and default = None for Optional usecases 
+    try:
+        with get_conn() as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute("SELECT thread_id, thread_name,file_name FROM threads WHERE user_id = %s ORDER BY created_at DESC",(user_id,))
+                return cur.fetchall()
+
+    except Exception as e:
+        raise RuntimeError(f"Cannot fetch threads for the current user; Error: {e}") from e
+    

@@ -8,10 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
-threads.db*
-
 .env
 venv/
 .venv/
 .vscode
-
+data/

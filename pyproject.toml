@@ -10,7 +10,11 @@ dependencies = [
     "langchain-community>=0.4.1",
     "langchain-openai>=1.1.7",
     "langgraph>=1.0.7",
+    "langgraph-checkpoint-postgres>=3.0.4",
     "langgraph-checkpoint-sqlite>=3.0.3",
     "langsmith>=0.6.6",
+    "psycopg[binary]>=3.3.2",
+    "pypdf>=6.7.0",
     "streamlit>=1.53.1",
+    "youtube-transcript-api>=1.2.4",
 ]
