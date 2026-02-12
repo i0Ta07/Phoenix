@@ -15,12 +15,26 @@ RetrieverCacheKey = Tuple[uuid.UUID, uuid.UUID,Literal["YTvideo", "pdf"]]
 
 _RETRIEVER_CACHE: Dict[RetrieverCacheKey, any] = {}
 
+def get_chunk_size(doc_type: Literal["YTvideo", "pdf"]) -> dict:
+    if doc_type == "YTvideo":
+        return {
+            "chunk_size": 400,
+            "chunk_overlap":75
+        }
+    else:
+        return{
+            "chunk_size": 900,
+            "chunk_overlap":120            
+        }
+
+
 def create_vector_store(docs,thread_id:uuid.UUID,user_id:uuid.UUID,doc_type: Literal["YTvideo", "pdf"]):
     try:
         # Perform Chunking
+        chunk = get_chunk_size(doc_type)
         recursuive_splitter = RecursiveCharacterTextSplitter(
-            chunk_size = 900,
-            chunk_overlap = 150,
+            chunk_size = chunk['chunk_size'],
+            chunk_overlap = chunk['chunk_overlap'],
             separators=["\n\n", "\n", " ", ""]
         )
 

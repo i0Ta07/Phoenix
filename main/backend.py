@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from typing import Annotated,TypedDict
 from langgraph.graph.message import add_messages
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage,AIMessage,ToolMessage,HumanMessage
 from langchain_core.tools import tool
 from langchain_community.tools import DuckDuckGoSearchRun
-from langgraph.prebuilt import ToolNode,tools_condition
+from langgraph.prebuilt import tools_condition
 from RAG import get_retriever,create_vector_store
 from langchain_core.runnables import RunnableConfig
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
@@ -21,6 +21,7 @@ load_dotenv()
 # define the state
 class ChatState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
+    tool_call_count:int
 
 # define model
 model = ChatOpenAI(model="gpt-5")
@@ -184,21 +185,47 @@ tool_llm = model.bind_tools(tools)
 
 # ******************************************************** Graph Fucntions ********************************************
 
+MAX_TOOL_CALLS = 5
+tool_map = {}
+for tool in tools:
+    tool_map[tool.name] = tool
+
 # define fucntion
 def chat(state:ChatState):
     messages = state['messages']
     response = tool_llm.invoke(messages) # Invoke using tool node
-    return {'messages':[response]} # Return as list for later concatenation with existing message list.
+    if isinstance(messages[-1], HumanMessage):
+        return {
+            'messages': [response],
+            'tool_call_count': 0
+        }
+    
+    return {'messages': [response]} # Return as list for later concatenation with existing message list.
+
+
+def tool(state:ChatState):
+    last_message = state['messages'][-1]
+    current_count = state.get("tool_call_count",0)
+
+    if isinstance(last_message,AIMessage) and last_message.tool_calls:
+        response = []
+        for tc in last_message.tool_calls:
+            if current_count < MAX_TOOL_CALLS:
+                result = tool_map[tc["name"]].invoke(tc["args"])
+                current_count += 1
+            else:
+                result  = result = f"Tool call limit exceeded: Only {MAX_TOOL_CALLS} tool calls are allowed per query. You have already made {current_count} calls. Please provide a final answer with the information gathered so far."
+            tool_message = ToolMessage(content = str(result),tool_call_id = tc["id"],name = tc["name"] ,type='tool')
+            response.append(tool_message)
+        return {'messages': response, 'tool_call_count':current_count}
 
 # Create Graph
 builder = StateGraph(ChatState)
 
-# Create tool_node using pre-built ToolNode, provide it tools
-tool_node = ToolNode(tools)
 
 # Define nodes and edges
 builder.add_node("chat_node",chat)
-builder.add_node("tools",tool_node)
+builder.add_node("tools",tool)
 
 builder.add_edge(START,"chat_node")
 builder.add_conditional_edges("chat_node",tools_condition)
