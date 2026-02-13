@@ -1,4 +1,4 @@
-import requests,os,re
+import requests,os,re,asyncio
 from langgraph.graph import StateGraph, START
 from langgraph.checkpoint.postgres import PostgresSaver
 from dotenv import load_dotenv
@@ -215,9 +215,48 @@ def tool(state:ChatState):
                 current_count += 1
             else:
                 result  = result = f"Tool call limit exceeded: Only {MAX_TOOL_CALLS} tool calls are allowed per query. You have already made {current_count} calls. Please provide a final answer with the information gathered so far."
-            tool_message = ToolMessage(content = str(result),tool_call_id = tc["id"],name = tc["name"] ,type='tool')
+            tool_message = ToolMessage(content = str(result),tool_call_id = tc["id"],name = tc["name"])
             response.append(tool_message)
         return {'messages': response, 'tool_call_count':current_count}
+    
+# Have to convert postgres, all other node(ainvoke) and stream(astream) to implement Async. One async all async
+
+async def async_tool(state:ChatState):
+    last_message = state['messages'][-1]
+    current_count = state.get("tool_call_count",0)
+
+    tool_calls = last_message.tool_calls
+
+    remaining_quota = max(0,MAX_TOOL_CALLS - current_count)
+    allowed_calls = tool_calls[:remaining_quota] # from zero to remaining_quota - 1
+    denied_calls = tool_calls[len(allowed_calls):] # from len(allowed) till last
+
+    response = []
+
+    async def run_tool(tc):
+        tool_name = tc["name"]
+        try:
+            result = await tool_map[tool_name].ainvoke(tc['args']) # returns a coroutine that must be awaited before converting to string
+        except Exception as e:
+            result = f"Tool execution error: {str(e)}"
+        return tc, result
+    
+    tasks = [run_tool(tc) for tc in allowed_calls] # Create coroutines(tasks that will run together) in a list
+
+    if tasks:
+        # Send coroutines for parallel execution
+        completed = await asyncio.gather(*tasks) # Need coroutines as arguments not a list, therefore unpack
+        for tc, result in completed:
+            response.append(ToolMessage(content=str(result),tool_call_id = tc['id'],name = tc['name']))
+
+    for tc in denied_calls:
+        response.append(ToolMessage(content=f"Tool call limit exceeded: Only {MAX_TOOL_CALLS} tool calls are allowed per query. You have already made {current_count + len(allowed_calls)} calls. Please provide a final answer with the information gathered so far.",
+            tool_call_id = tc['id'],name = tc['name']))
+
+    return{
+        "messages":response,
+        "tool_call_count": current_count + len(allowed_calls)
+    }
 
 # Create Graph
 builder = StateGraph(ChatState)
