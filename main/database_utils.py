@@ -4,11 +4,7 @@ from psycopg.rows import dict_row
 def get_conn():
     try:
         conn = psycopg.connect(
-            dbname=os.getenv("DB_NAME"),
-            user=os.getenv("DB_USER"), 
-            password=os.getenv("DB_PASSWORD"),
-            host=os.getenv("DB_HOST", "localhost"),
-            port=int(os.getenv("DB_PORT", "5432")),
+            os.getenv("DB_URL"),
             autocommit=True
         )
         return conn

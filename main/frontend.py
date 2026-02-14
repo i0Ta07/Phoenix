@@ -6,8 +6,29 @@ import uuid,os
 from database_utils import create_thread, get_threads,init_schema,update_file_name
 from RAG import ingest_pdf
 
-# Set LangSmith Project
-os.environ['LANGSMITH_PROJECT'] = "Streamlit Chatbot"
+# Load env variables from st.secrets
+
+if "OPENAI_API_KEY" not in os.environ:
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+
+if "LANGSMITH_PROJECT" not in os.environ:
+    os.environ['LANGSMITH_PROJECT'] = st.secrets['LANGSMITH_PROJECT']
+
+if "LANGSMITH_TRACING" not in os.environ:
+    os.environ['LANGSMITH_TRACING'] = st.secrets['LANGSMITH_TRACING']
+
+if "LANGSMITH_ENDPOINT" not in os.environ:
+    os.environ['LANGSMITH_ENDPOINT'] = st.secrets['LANGSMITH_ENDPOINT']
+
+if "LANGSMITH_API_KEY" not in os.environ:
+    os.environ['LANGSMITH_API_KEY'] = st.secrets['LANGSMITH_API_KEY']
+
+if "EXCHANGE_API_KEY" not in os.environ:
+    os.environ['EXCHANGE_API_KEY'] = st.secrets['EXCHANGE_API_KEY']
+
+if "DB_URL" not in os.environ:
+    os.environ['DB_URL'] = st.secrets['DB_URL']
+
 
 # ********************************************************* Utils ****************************************************
 init_schema()

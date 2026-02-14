@@ -117,11 +117,7 @@ LANGCHAIN_PROJECT=phoenix
 EXCHANGE_API_KEY=your_exchange_rate_api_key
 
 # PostgreSQL Database
-DB_NAME =  "phoenix_db"
-DB_USER  = "phoenix_user"
-DB_PASSWORD = "your_password"
-DB_HOST =  "localhost"
-DB_PORT =  "5432"
+DB_URL="postgresql://phoenix_user:your_password@localhost:5432/phoenix_db"
 ```
 
 5. **Launch the application**

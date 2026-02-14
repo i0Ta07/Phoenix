@@ -11,6 +11,13 @@ wheels/
 .env
 venv/
 .venv/
+
+# IDE
 .vscode
+
+# Local data / notebooks
 data/
 temp.ipynb
+
+# Streamlit secrets 
+.streamlit/secrets.toml
