@@ -3,12 +3,11 @@ from pathlib import Path
 from langchain_community.vectorstores import FAISS
 from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_openai import OpenAIEmbeddings
-from dotenv import load_dotenv
+from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
 from typing import Dict, Tuple,Literal
 
-load_dotenv()
-EMBEDDING_MODEL = OpenAIEmbeddings(model="text-embedding-3-small")
+EMBEDDING_MODEL = HuggingFaceEndpointEmbeddings(model="sentence-transformers/all-MiniLM-L6-v2")
+
 BASE_DIR =  Path.cwd()
 
 RetrieverCacheKey = Tuple[uuid.UUID, uuid.UUID,Literal["YTvideo", "pdf"]]
@@ -18,8 +17,8 @@ _RETRIEVER_CACHE: Dict[RetrieverCacheKey, any] = {}
 def get_chunk_size(doc_type: Literal["YTvideo", "pdf"]) -> dict:
     if doc_type == "YTvideo":
         return {
-            "chunk_size": 400,
-            "chunk_overlap":75
+            "chunk_size": 500,
+            "chunk_overlap":95
         }
     else:
         return{

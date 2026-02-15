@@ -1,0 +1,29 @@
+name: Reset Neon DB
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # every 30 minutes
+  workflow_dispatch:
+
+jobs:
+  reset-db:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Reset Neon Branch
+        run: python reset_neon.py
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          PROD_BRANCH_ID: ${{ vars.PROD_BRANCH_ID }}
+          BASE_BRANCH_ID: ${{ vars.BASE_BRANCH_ID }}

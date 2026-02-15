@@ -1,6 +1,6 @@
 # Phoenix - Agentic Chatbot
 
-A production-ready conversational AI agent built with **LangGraph** and **Streamlit**, featuring persistent memory with PostgreSQL, real-time streaming, multi-tool integration, and document/video Q&A capabilities with full observability.
+A production-ready conversational AI agent built with **LangGraph** and **Streamlit**, featuring persistent memory with PostgreSQL, real-time streaming, multi-tool integration, and document/video Q&A capabilities with full observability. Try it live: [Phoenix](https://phoenix-i0ta07.streamlit.app/ "Phoenix")
 
 ## Core Features
 
@@ -68,64 +68,79 @@ Four production-ready tools with streaming output:
 
 1. **Clone the repository**
 
-```bash
-git clone https://github.com/i0Ta07/Phoenix
-cd Phoenix
-```
+   ```bash
+   git clone https://github.com/i0Ta07/Phoenix
+   cd Phoenix
+   ```
 
 2. **Install dependencies**
 
-```bash
-uv sync
-```
+   ```bash
+   uv sync
+   ```
 
 3. **Set up PostgreSQL database**
 
-```bash
--- Create the user 
-CREATE USER phoenix_user WITH PASSWORD 'your_password';
+   ```bash
+   -- Create the user 
+   CREATE USER phoenix_user WITH PASSWORD 'your_password';
 
--- Create the database with this user as owner
-CREATE DATABASE phoenix_db OWNER phoenix_user;
+   -- Create the database with this user as owner
+   CREATE DATABASE phoenix_db OWNER phoenix_user;
 
--- Connect to the new database
-\c phoenix_db
+   -- Connect to the new database
+   \c phoenix_db
 
--- Grant schema privileges (phoenix_user already owns the database, but this ensures they can create objects)
-GRANT ALL PRIVILEGES ON SCHEMA public TO phoenix_user;
+   -- Grant schema privileges (phoenix_user already owns the database, but this ensures they can create objects)
+   GRANT ALL PRIVILEGES ON SCHEMA public TO phoenix_user;
 
--- For future tables/sequences created by ANY user, grant access to phoenix_user
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO phoenix_user;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO phoenix_user;
-```
+   -- For future tables/sequences created by ANY user, grant access to phoenix_user
+   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO phoenix_user;
+   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO phoenix_user;
+   ```
 
 4. **Configure environment variables**
 
-Create a `.env` file in the root directory:
+   Create a `.env` file in the root directory:
 
-```env
-# OpenAI
-OPENAI_API_KEY=your_openai_key
+   ```env
+   # OpenAI
+   OPENAI_API_KEY=your_openai_key
 
-# LangSmith Observability
-LANGSMITH_API_KEY=your_langsmith_key
-LANGCHAIN_TRACING=true
-LANGSMITH_ENDPOINT=https://api.smith.langchain.com
-LANGCHAIN_PROJECT=phoenix
+   # LangSmith Observability
+   LANGSMITH_API_KEY=your_langsmith_key
+   LANGCHAIN_TRACING=true
+   LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+   LANGCHAIN_PROJECT=phoenix
 
-# ExchangeRate API
-EXCHANGE_API_KEY=your_exchange_rate_api_key
+   # ExchangeRate API
+   EXCHANGE_API_KEY=your_exchange_rate_api_key
 
-# PostgreSQL Database
-DB_URL="postgresql://phoenix_user:your_password@localhost:5432/phoenix_db"
-```
+   # PostgreSQL Database
+   DB_URL="postgresql://phoenix_user:your_password@localhost:5432/phoenix_db"
+   ```
 
 5. **Launch the application**
 
-```bash
-cd main
-uv run streamlit run frontend.py
-```
+   ```bash
+   cd main
+   uv run streamlit run frontend.py
+   ```
+
+## 🚀 Production Deployment
+
+Phoenix is deployed on **Streamlit Cloud**.
+
+| Component     | Service                            |
+| ------------- | ---------------------------------- |
+| Hosting       | Streamlit Cloud                    |
+| LLM Inference | Groq (`llama-3.3-70b-versatile`)   |
+| Embeddings    | HuggingFace (`all-MiniLM-L6-v2`)   |
+| Database      | Neon DB (Serverless Postgres)      |
+| DB Reset      | GitHub Actions (every 30 min)      |
+
+> Please mind occasional Groq API errors — free tier has rate limitations.
+> Since this is a shared demo, the database resets every 30 minutes to prevent request threads from piling up.
 
 ## UI
 

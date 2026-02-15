@@ -1,8 +1,7 @@
 import requests,os,re,asyncio
 from langgraph.graph import StateGraph, START
 from langgraph.checkpoint.postgres import PostgresSaver
-from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 from typing import Annotated,TypedDict
 from langgraph.graph.message import add_messages
 from langchain_core.messages import BaseMessage,AIMessage,ToolMessage,HumanMessage
@@ -13,10 +12,7 @@ from RAG import get_retriever,create_vector_store
 from langchain_core.runnables import RunnableConfig
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
 from langchain_core.documents import Document
-
-
 from database_utils import get_conn,init_schema
-load_dotenv()
 
 # define the state
 class ChatState(TypedDict):
@@ -24,8 +20,8 @@ class ChatState(TypedDict):
     tool_call_count:int
 
 # define model
-model = ChatOpenAI(model="gpt-5")
-rename_chat_model = ChatOpenAI()
+model = ChatGroq(model="llama-3.3-70b-versatile",temperature=0.5)
+rename_chat_model = ChatGroq(model="llama-3.1-8b-instant",temperature=0,max_tokens=12)
 
 # **************************************************** Tools *********************************************************
 
@@ -282,5 +278,3 @@ checkpointer.setup()
 
 # Compile the graph
 graph = builder.compile(checkpointer=checkpointer)
-
-
