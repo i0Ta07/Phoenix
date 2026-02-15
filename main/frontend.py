@@ -8,9 +8,6 @@ from RAG import ingest_pdf
 
 # Load env variables from st.secrets
 
-if "OPENAI_API_KEY" not in os.environ:
-    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-
 if "LANGSMITH_PROJECT" not in os.environ:
     os.environ['LANGSMITH_PROJECT'] = st.secrets['LANGSMITH_PROJECT']
 
@@ -28,6 +25,12 @@ if "EXCHANGE_API_KEY" not in os.environ:
 
 if "DB_URL" not in os.environ:
     os.environ['DB_URL'] = st.secrets['DB_URL']
+
+if "HF_TOKEN" not in os.environ:
+    os.environ['HF_TOKEN'] = st.secrets['HF_TOKEN']
+    
+if "GROQ_API_KEY" not in os.environ:
+    os.environ['GROQ_API_KEY'] = st.secrets['GROQ_API_KEY']
 
 
 # ********************************************************* Utils ****************************************************
