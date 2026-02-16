@@ -142,10 +142,10 @@ if not st.session_state["message_history"]:
     st.markdown(body=
     """
     <div style="text-align:center">
+    
+    ## Welcome 
 
-    ## Welcome 👋
-
-    #### What this chatbot can do
+    Tip: You may encounter `groq.APIError` due to sending multiple token-heavy requests in a short period, as the Groq free tier enforces rate limits.
 
     </div>
 

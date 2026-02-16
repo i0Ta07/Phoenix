@@ -12,7 +12,7 @@ from RAG import get_retriever,create_vector_store
 from langchain_core.runnables import RunnableConfig
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
 from langchain_core.documents import Document
-from database_utils import get_conn,init_schema
+from database_utils import init_schema,pool
 
 # define the state
 class ChatState(TypedDict):
@@ -268,11 +268,8 @@ builder.add_edge("tools","chat_node") # Connect tool_node to process node again
 
 init_schema()
 
-# Create a postgres connection object
-conn = get_conn()
-
-# Create checkpointer
-checkpointer = PostgresSaver(conn)
+# Create checkpointer using the whole pool
+checkpointer = PostgresSaver(pool) # Checkpointer either needs a pool or a long lived connection(bad for NeonDB)
 
 checkpointer.setup()
 

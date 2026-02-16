@@ -1,15 +1,21 @@
-import psycopg,os,uuid
+import os,uuid
 from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
 
+
+pool = ConnectionPool(
+    conninfo=os.getenv("DB_URL"),
+    min_size=1,
+    max_size=10,
+    kwargs={
+        "autocommit": True,
+        "row_factory":dict_row,
+        "prepare_threshold":0
+    }
+)
 def get_conn():
-    try:
-        conn = psycopg.connect(
-            os.getenv("DB_URL"),
-            autocommit=True
-        )
-        return conn
-    except Exception as e:
-        raise RuntimeError(f"Database connection failed: {e}")
+    return pool.connection()
+    
 
 def init_schema():
     try:
@@ -73,7 +79,7 @@ def update_file_name(file_name:str, thread_id:uuid.UUID,user_id:uuid.UUID):
 def get_threads(user_id:uuid.UUID): # either user_id =  (UUID obj or None) and default = None for Optional usecases 
     try:
         with get_conn() as conn:
-            with conn.cursor(row_factory=dict_row) as cur:
+            with conn.cursor() as cur:
                 cur.execute("SELECT thread_id, thread_name,file_name FROM threads WHERE user_id = %s ORDER BY created_at DESC",(user_id,))
                 return cur.fetchall()
 

@@ -1,6 +1,6 @@
 # Phoenix - Agentic Chatbot
 
-A production-ready conversational AI agent built with **LangGraph** and **Streamlit**, featuring persistent memory with PostgreSQL, real-time streaming, multi-tool integration, and document/video Q&A capabilities with full observability. Try it live: [Phoenix](https://phoenix-i0ta07.streamlit.app/ "Phoenix")
+A production-ready conversational AI agent built with **LangGraph** and **Streamlit**, featuring persistent memory with PostgreSQL, real-time streaming, multi-tool integration, and document/video Q&A capabilities with full observability. [Try it live here](https://phoenix-i0ta07.streamlit.app/ "Phoenix").
 
 ## Core Features
 
