@@ -2,7 +2,7 @@ name: Reset Neon DB
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # every 30 minutes
+    - cron: "0 0 * * *"  # 12AM everyday
   workflow_dispatch:
 
 jobs:
