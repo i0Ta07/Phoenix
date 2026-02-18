@@ -20,13 +20,13 @@ class ChatState(TypedDict):
     tool_call_count:int
 
 # define model
-model = ChatGroq(model="llama-3.3-70b-versatile",temperature=0.5)
-rename_chat_model = ChatGroq(model="llama-3.1-8b-instant",temperature=0,max_tokens=12)
+model = ChatGroq(model="openai/gpt-oss-120b",temperature=0.5)
+rename_chat_model = ChatGroq(model="openai/gpt-oss-20b",temperature=0.1)
 
 # **************************************************** Tools *********************************************************
 
 # Define tools 
-search_tool = DuckDuckGoSearchRun()
+search_tool = DuckDuckGoSearchRun(description="Search the web. Input: a plain string query.")
 
 @tool
 def calculator(first_number:float, second_number:float, operation:str) -> dict:
