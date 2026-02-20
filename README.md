@@ -140,7 +140,7 @@ Phoenix is deployed on **Streamlit Cloud**.
 | DB Reset      | GitHub Actions (every 30 min)      |
 
 > Please mind occasional Groq API errors — free tier has rate limitations.
-> Since this is a shared demo, the database resets every 30 minutes to prevent request threads from piling up.
+> Since this is a shared demo, the database resets every day to prevent request threads from piling up.
 
 ## UI
 
