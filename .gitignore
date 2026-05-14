@@ -20,4 +20,4 @@ data/
 temp.ipynb
 
 # Streamlit secrets 
-.streamlit/secrets.toml
+.streamlit/
