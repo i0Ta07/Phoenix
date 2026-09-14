@@ -1,23 +1,23 @@
 # Phoenix - Agentic Chatbot
 
-A production-ready conversational AI agent built with **LangGraph** and **Streamlit**, featuring persistent memory with PostgreSQL, real-time streaming, multi-tool integration, and document/video Q&A capabilities with full observability. [Try it live here](https://phoenix-i0ta07.streamlit.app/ "Phoenix").
+A conversational AI agent built with **LangGraph** and **Streamlit**, featuring persistent memory with PostgreSQL, real-time streaming, multi-tool integration, and document/video Q&A capabilities with full observability. [Try it live here](https://phoenix-i0ta07.streamlit.app/ "Phoenix").
 
 ## Core Features
 
-### 🧠 Persistent Memory
+### Persistent Memory
 
-* **PostgreSQL-based checkpoint persistence** for production-grade reliability
+* **PostgreSQL-based checkpoint persistence** for reliability
 * Thread-based conversation storage across sessions
 * Reload previous conversations seamlessly
 * Short-term memory implementation for context-aware responses
 
-### ⚡ Real-Time Streaming
+### Real-Time Streaming
 
 * **Token-by-token streaming** for improved user experience
 * Live tool execution feedback (e.g., "Calling get_weather... Processing... Done")
 * Asynchronous response generation with visual indicators
 
-### 🛠️ Multi-Tool Integration
+### Multi-Tool Integration
 
 Four production-ready tools with streaming output:
 
@@ -26,27 +26,27 @@ Four production-ready tools with streaming output:
 3. **Currency Converter** - Real-time exchange rates
 4. **Weather API** - Current weather data
 
-### 📄 PDF Question Answering
+### PDF Question Answering
 
 * Upload **one PDF per chat**
 * Ask questions grounded strictly in that document
 * RAG-based retrieval for accurate answers
 * To query another PDF, start a **new chat**
 
-### 🎥 YouTube Video Q&A
+### YouTube Video Q&A
 
 * Provide **one YouTube video per chat**
 * Ask questions based on the video transcript
 * Semantic search across video content
 * To analyze a different video, start a **new chat**
 
-### 🔍 Full Observability
+### Full Observability
 
 * **LangSmith integration** for debugging and monitoring
 * Trace all LLM calls, tool executions, and agent decisions
 * Performance analytics and error tracking
 
-### 💻 Interactive Frontend
+### Interactive Frontend
 
 * Built with **Streamlit** for rapid prototyping
 * Clean, responsive UI with real-time updates
@@ -127,7 +127,7 @@ Four production-ready tools with streaming output:
    uv run streamlit run frontend.py
    ```
 
-## 🚀 Production Deployment
+## Deployment
 
 Phoenix is deployed on **Streamlit Cloud**.
 
@@ -141,6 +141,7 @@ Phoenix is deployed on **Streamlit Cloud**.
 
 > Please mind occasional Groq API errors — free tier has rate limitations.
 > Since this is a shared demo, the database resets every day to prevent request threads from piling up.
+> Also, the app is deployed on Streamlit, that uses AWS servers. The YT subtitles API blocks IPs originating from AWS servers. Hence, during deployment you cannot ask question about a YT video.
 
 ## UI
 
