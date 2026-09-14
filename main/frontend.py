@@ -143,30 +143,30 @@ if not st.session_state["message_history"]:
     """
     <div style="text-align:center">
     
-    ## Welcome 
-
-    Tip: You may encounter `groq.APIError` due to sending multiple token-heavy requests in a short period, as the Groq free tier enforces rate limits.
-
+    ## Welcome
+ 
     </div>
 
-    **📄 PDF Question Answering**
+    > You may encounter `groq.APIError` due to sending multiple token-heavy requests in a short period, as the Groq free tier enforces rate limits.
+    \n
+    > Since, it is deployed on Streamlit, that uses AWS servers. The YT subtitles API blocks IPs originating from AWS servers. Hence, you cannot ask question about a YT video here. If you choose to run this locally on your machine, it will work as expected.
+
+    **PDF Question Answering**
     - Upload **one PDF per chat**
     - Ask questions grounded strictly in that document
     - To query another PDF, start a **new chat**
 
-    **🎥 YouTube Video Q&A**
+    **YouTube Video Q&A**
     - Provide **one YouTube video per chat**
     - Ask questions based on the video transcript
     - To analyze a different video, start a **new chat**
 
-    **🌦️ Utilities**
+    **Web Search & Utilities**
+    - Retrieve the latest information from the internet
+    - Powered by DuckDuckGo search
     - Weather information
     - Currency conversion
     - Arithmetic and numerical operations
-
-    **🌐 Web Search**
-    - Retrieve the latest information from the internet
-    - Powered by DuckDuckGo search
 
     ---
     """,text_alignment="justify",width="stretch",unsafe_allow_html=True)
