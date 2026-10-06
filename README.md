@@ -63,10 +63,6 @@ Four production-ready tools with streaming output:
 * Python 3.10+
 * [uv](https://github.com/astral-sh/uv) package manager
 * PostgreSQL 12+ installed and running
-* API keys for:
-  * OpenAI
-  * LangSmith (for observability)
-  * ExchangeRate API
 
 ### Installation
 
@@ -108,8 +104,8 @@ Four production-ready tools with streaming output:
    Create a `.env` file in the root directory:
 
    ```env
-   # OpenAI
-   OPENAI_API_KEY=your_openai_key
+   # Groq
+   GROQ_API_KEY=your_groq_key
 
    # LangSmith Observability
    LANGSMITH_API_KEY=your_langsmith_key
@@ -119,6 +115,9 @@ Four production-ready tools with streaming output:
 
    # ExchangeRate API
    EXCHANGE_API_KEY=your_exchange_rate_api_key
+
+   # Hugging Face Token
+   HF_TOKEN = "your_hugging_face_token"
 
    # PostgreSQL Database
    DB_URL="postgresql://phoenix_user:your_password@localhost:5432/phoenix_db"
@@ -135,13 +134,13 @@ Four production-ready tools with streaming output:
 
 Phoenix is deployed on **Streamlit Cloud**.
 
-| Component     | Service                               |
-| ------------- | --------------------------------------|
-| Hosting       | Streamlit Cloud                       |
-| LLM Inference | Groq (`gpt-oss-120b`,`gpt-oss-20b`)   |
-| Embeddings    | HuggingFace (`all-MiniLM-L6-v2`)      |
-| Database      | Neon DB (Serverless Postgres)         |
-| DB Reset      | GitHub Actions (every 30 min)         |
+| Component     | Service                                                    |
+| ------------- | ---------------------------------------------------------- |
+| Hosting       | Streamlit Cloud                                            |
+| LLM Inference | Groq (`gpt-oss-120b`,`gpt-oss-20b`)                        |
+| Embeddings    | HuggingFace (`all-MiniLM-L6-v2`)                           |
+| Database      | Neon DB (Serverless Postgres)                              |
+| DB Reset      | GitHub Actions (every day (disabled due to low usage now)) |
 
 ## UI
 
