@@ -127,7 +127,7 @@ Four production-ready tools with streaming output:
 
    ```bash
    cd main
-   uv run streamlit run frontend.py
+   uv run streamlit run main/frontend.py
    ```
 
 ## Deployment

@@ -210,7 +210,7 @@ def tool(state:ChatState):
                 result = tool_map[tc["name"]].invoke(tc["args"])
                 current_count += 1
             else:
-                result  = result = f"Tool call limit exceeded: Only {MAX_TOOL_CALLS} tool calls are allowed per query. You have already made {current_count} calls. Please provide a final answer with the information gathered so far."
+                result = f"Tool call limit exceeded: Only {MAX_TOOL_CALLS} tool calls are allowed per query. You have already made {current_count} calls. Please provide a final answer with the information gathered so far."
             tool_message = ToolMessage(content = str(result),tool_call_id = tc["id"],name = tc["name"])
             response.append(tool_message)
         return {'messages': response, 'tool_call_count':current_count}
